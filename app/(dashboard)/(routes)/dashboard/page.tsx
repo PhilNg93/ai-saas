@@ -58,7 +58,7 @@ const router = useRouter();
   </div>
   <div className="px-4 md:px-20 lg:px-32 space-y-4">
     {tools.map((tool => (
-      <Card 
+      <Card
             onClick={() => router.push(tool.href)}
             key={tool.href}
             className="p-4 border-black/5 flex items-center

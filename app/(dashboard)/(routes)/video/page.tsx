@@ -1,9 +1,8 @@
 "use client";
 import axios from "axios";
-import { ChatCompletionRequestMessage } from "openai";
 import * as z from "zod";
 import { Heading } from "@/components/heading";
-import { MessagesSquare } from "lucide-react";
+import { VideoIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { formSchema } from "./constants";
 import {zodResolver} from "@hookform/resolvers/zod"
@@ -15,15 +14,13 @@ import { useState } from "react";
 import { Empty } from "@/components/empty";
 import {Loader} from "@/components/loader";
 import { cn } from "@/lib/utils";
-import { UserAvatar } from "@/components/user-avatar";
-import { BotAvatar } from "@/components/bot-avatar";
 import { useProModal } from "@/hooks/use-pro-modal";
 import toast from "react-hot-toast";
 
-const ConversationPage = () => {
+const VideoPage = () => {
     const router = useRouter();
     const proModal = useProModal();
-    const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
+    const [video, setVideo] = useState<string>();
     const form= useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -37,17 +34,9 @@ const ConversationPage = () => {
     //<typeof formSchema>: This part specifies a TypeScript type, which in this case is the type of the formSchema object. typeof formSchema gets the TypeScript type of the formSchema object.
     //<z.infer<typeof formSchema>>: Wrapping z.infer<typeof formSchema> in angle brackets indicates that you want to use type inference (from Zod) and parameterize it with the type of formSchema. This helps TypeScript understand the expected shape of the values parameter based on the schema.
         try {
-            const userMessage: ChatCompletionRequestMessage = {
-                role: "user",
-                content: values.prompt,
-            }
-            const newMessages = [...messages, userMessage];
-            const response = await axios.post("/api/conversation", {
-                messages: newMessages
-            });
-
-            setMessages((current) => [...current, userMessage, response.data])
-
+            setVideo(undefined);
+            const response = await axios.post("/api/video", values)
+            setVideo(response.data[0]);
             form.reset();
         } catch (error: any) {
             if (error?.response?.status === 403) { //add ? (optional chaining) to ensure the error caught is 403 to open proModal
@@ -59,30 +48,14 @@ const ConversationPage = () => {
             router.refresh();
         }
     };
-
-    //The code you've provided is a TypeScript function named `onSubmit` that takes a single argument `values`.
-    //The type of the `values` argument is inferred using the `z.infer` function applied to the `formSchema` that you defined earlier.
-    //This means that the `values` argument should match the shape of the schema defined by `formSchema`.
-
-    //Here's a breakdown of the code:
-
-    //1. `const onSubmit = async(values: z.infer<typeof formSchema>) => {`: This defines an asynchronous function named `onSubmit` that takes an argument named `values`. The type of `values` is inferred using `z.infer<typeof formSchema>`. In this context, it means that `values` should have the same structure as the object schema defined by `formSchema`.
-
-    //2. `console.log(values)`: Inside the `onSubmit` function, you're logging the `values` to the console. This will print out the content of the `values` object, which should correspond to the structure defined by `formSchema`.
-
-    //     The angle brackets < > syntax you see around z.infer<typeof formSchema> is used for type inference and generics in TypeScript. Let's break down why they are used in this context:
-
-    // Type Inference: TypeScript's type inference allows the compiler to automatically determine the types of variables and expressions based on the context. However, in some cases, you might need to explicitly specify a type, especially when the inference isn't able to capture the exact type you want. This is where type annotations come in.
-
-    // Generics: Generics in TypeScript provide a way to create reusable components that can work with different types while maintaining type safety. They allow you to parameterize types and functions to work with various data types.
     return (
         <div>
             <Heading
-            title="Conversation"
-            description="Our most advanced conversation model"
-            icon={MessagesSquare}
-            iconColor="text-violet-500"
-            bgColor="bg-violet-500/10" />
+            title="Video Generation"
+            description="Turn your prompt into video"
+            icon={VideoIcon}
+            iconColor="text-orange-700"
+            bgColor="bg-orange-700/10" />
             <div className="px-4 lg: px-8">
                 <div>
                     <Form {...form}>
@@ -108,7 +81,7 @@ const ConversationPage = () => {
                                             <Input
                                             className="border-0 outline-none focus-visible: ring-0 focus-visible:ring-transparent"
                                             disabled={isLoading}
-                                            placeholder="How do I calculate the radius of a circle?"
+                                            placeholder="Clown fish swimming around a coral reef"
                                             {...field}
                                             />
                                         </FormControl>
@@ -126,27 +99,20 @@ const ConversationPage = () => {
                             <Loader />
                         </div>
                     )}
-                    {messages.length === 0 && !isLoading && (
+                    {!video && !isLoading && (
                         <div>
-                            <Empty label="No Conversation Started" />
+                            <Empty label="No Video Generated" />
                         </div>
                     )}
-                    <div className="flex flex-col-reverse gap-y-4">
-                        {messages.map((message) => (
-                            <div
-                            className={cn("p-8 w-full flex items-start gap-x-8 rounded-lg", message.role === "user" ? "bg-white border border-black/10" : "bg-muted")}
-                            key={message.content}>
-                                {message.role === "user" ? <UserAvatar /> : <BotAvatar />}
-                                {message.content}
-                                <p className="text-sm">
-                                </p>
-                            </div>
-                        ))}
-                    </div>
+                {video && (
+                    <video controls className="w-full aspect-video mt-8 rounded-lg border bg-black">
+                        <source src={video} />
+                    </video>
+                )}
                  </div>
             </div>
         </div>
 );
 }
 
-export default ConversationPage;
+export default VideoPage;
