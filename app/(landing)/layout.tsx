@@ -10,3 +10,5 @@ const LandingLayout =({
         </main>
     )
 }
+
+export default LandingLayout;
